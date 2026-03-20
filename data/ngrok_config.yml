@@ -1,0 +1,7 @@
+authtoken: new_test_token
+tunnels:
+  api_test_tunnel:
+    addr: '8000'
+    domain: test.ngrok.io
+    proto: http
+version: '2'
