@@ -49,3 +49,24 @@ def test_delete_tunnel(client):
 def test_delete_nonexistent_tunnel(client):
     response = client.delete("/api/v1/tunnels/nonexistent_xyz")
     assert response.status_code == 404
+
+from unittest.mock import patch
+
+def test_start_ngrok_failure(client):
+    with patch("app.services.process_manager.process_manager.start_ngrok", return_value=False):
+        response = client.post("/api/v1/start")
+        assert response.status_code == 500
+        assert response.json()["detail"] == "Failed to start ngrok"
+
+def test_stop_ngrok_success(client):
+    with patch("app.services.process_manager.process_manager.stop_ngrok", return_value=True):
+        response = client.post("/api/v1/stop")
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+
+def test_get_active_tunnels(client):
+    with patch("app.services.tunnel_manager.tunnel_manager.get_active_tunnels_info", return_value=[]):
+        response = client.get("/api/v1/active-tunnels")
+        assert response.status_code == 200
+        assert response.json() == []
+

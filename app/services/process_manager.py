@@ -7,6 +7,7 @@ import logging
 import asyncio
 from typing import Optional, Dict, Any
 from app.core.config import settings
+from app.services.webhook_service import webhook_service
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -61,6 +62,11 @@ class ProcessManager:
                 preexec_fn=os.setsid
             )
             logger.info(f"Started ngrok with PID: {self.process.pid}")
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(webhook_service.notify_tunnel_event("START", "all", "ngrok process started"))
+            except RuntimeError:
+                pass
             return True
         except Exception as e:
             logger.error(f"Failed to start ngrok: {e}")
@@ -78,6 +84,12 @@ class ProcessManager:
         
         if self.process:
             self.process = None
+        if stopped:
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(webhook_service.notify_tunnel_event("STOP", "all", "ngrok process stopped"))
+            except RuntimeError:
+                pass
         return stopped
 
     def restart_ngrok(self, config_path: str) -> bool:
