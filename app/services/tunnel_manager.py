@@ -4,6 +4,8 @@ import json
 from typing import List, Dict, Any, Optional
 from app.core.config import settings
 from app.services.process_manager import process_manager
+from app.services.webhook_service import webhook_service
+import asyncio
 
 class TunnelManager:
     def __init__(self):
@@ -46,12 +48,22 @@ class TunnelManager:
         tunnel_config.update(kwargs)
         config["tunnels"][name] = tunnel_config
         self._save_config(config)
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(webhook_service.notify_tunnel_event("TUNNEL_CREATED", name, f"Protocol: {proto}, Address: {addr}"))
+        except RuntimeError:
+            pass
 
     def remove_tunnel(self, name: str):
         config = self._load_config()
         if "tunnels" in config and name in config["tunnels"]:
             del config["tunnels"][name]
             self._save_config(config)
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(webhook_service.notify_tunnel_event("TUNNEL_DELETED", name))
+            except RuntimeError:
+                pass
             return True
         return False
 

@@ -4,8 +4,9 @@ from app.schemas.tunnel import TunnelCreate, TunnelResponse, AuthTokenUpdate, Sy
 from app.services.tunnel_manager import tunnel_manager
 from app.services.process_manager import process_manager
 from app.core.config import settings
+from app.core.security import get_api_key
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_api_key)])
 
 @router.get("/status", response_model=SystemStatus)
 async def get_status():
